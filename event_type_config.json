@@ -1,0 +1,17 @@
+{
+    "Conference 1": {
+        "Waiter": 10.0,
+        "Cloakroom": 0.0,
+        "Bartender": 0.0
+    },
+    "Conferenc 2": {
+        "Waiter": 8.0,
+        "Cloakroom": 0.0
+    },
+    "Dinner": {
+        "Waiter": 0.0,
+        "Cloakroom": 0.0,
+        "Bartender": 0.0,
+        "Wine Waiter": 0.0
+    }
+}

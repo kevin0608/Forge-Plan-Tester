@@ -1,0 +1,22 @@
+{
+    "Waiter": {
+        "ratio": 30,
+        "per_hour": 15.0,
+        "hours": 8.0
+    },
+    "Cloakroom": {
+        "ratio": 80,
+        "per_hour": 14.0,
+        "hours": 8.0
+    },
+    "Bartender": {
+        "ratio": 40,
+        "per_hour": 18.0,
+        "hours": 8.0
+    },
+    "Wine Waiter": {
+        "ratio": 25,
+        "per_hour": 17.0,
+        "hours": 8.0
+    }
+}

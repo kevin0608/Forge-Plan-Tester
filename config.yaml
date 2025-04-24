@@ -1,0 +1,16 @@
+credentials:
+  usernames:
+    kevin:
+      name: Kevin
+      password: "PASTE_YOUR_HASH_HERE"
+    admin:
+      name: Admin
+      password: "PASTE_ADMIN_HASH_HERE"
+
+cookie:
+  name: streamlit_auth
+  key: some_signature_key
+  expiry_days: 30
+
+preauthorized:
+  emails: []
