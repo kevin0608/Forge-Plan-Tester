@@ -42,7 +42,7 @@ def calculator():
         return
 
     # Load staff configuration
-    staff_config = load_staff_config()
+    staff_config = load_config_files()
 
     # Fetch user event config from Firestore
     try:
