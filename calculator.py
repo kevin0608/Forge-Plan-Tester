@@ -31,47 +31,16 @@ def calculator():
         st.error("You must be logged in to access this page!")
         return
 
-    # Ensure 'calculation_results' exists in session state
+    # Ensure that 'calculation_results' is always a dictionary
     if "calculation_results" not in st.session_state or not isinstance(st.session_state.calculation_results, dict):
         st.session_state.calculation_results = {}
 
-    # Get user ID from session
-    user_id = st.session_state.get("username")
-    if not user_id:
-        st.error("User not logged in.")
-        return
+    staff_config, event_config = load_config_files()
 
-    # Load staff configuration
-    staff_config = load_config_files()
+    st.title("Staffing Calculator")
 
-    # Fetch user event config from Firestore
-    try:
-        user_ref = db.collection('users').document(user_id)
-        user_data = user_ref.get().to_dict()
+    event_type = st.selectbox("Select Event Type", list(event_config.keys()))
 
-        if not user_data:
-            st.error("User data not found.")
-            return
-
-        # Print out user_data to debug
-        st.write("User data:", user_data)
-
-        # Get event_types from config
-        event_types = user_data.get('config', {}).get('event_types', {})
-
-        if not event_types:
-            st.info("No event types configured. Please configure some first.")
-            return
-
-        # Build dropdown options from the keys of event_types
-        event_type_names = list(event_types.keys())
-        event_type = st.selectbox("Select Event Type", event_type_names)
-
-    except Exception as e:
-        st.error(f"Error fetching event types: {e}")
-        return
-
-    # Inputs
     col1, col2 = st.columns(2)
     with col1:
         num_guests = st.number_input("Enter the Number of Guests", min_value=1)
@@ -80,37 +49,31 @@ def calculator():
 
     if st.button("Calculate Staff Costs"):
         if event_type and num_guests:
-            selected_event = event_types.get(event_type)
+            staff_needed = []
 
-            if not selected_event:
-                st.warning("Selected event type not found.")
-                return
+            # Iterate through roles and use override hours if present
+            for role, override_hours in event_config[event_type].items():
+                if role in staff_config:
+                    ratio = staff_config[role]['ratio']
+                    hourly_rate = staff_config[role]['per_hour']
+                    default_hours = staff_config[role].get('hours', 8)
+                    hours = override_hours if override_hours else default_hours
 
-            # You can now access the roles and numbers directly from selected_event
-            for staff_role, num in selected_event.items():
-                if staff_role not in staff_config:
-                    st.warning(f"No staff configuration found for role '{staff_role}'.")
-                    return
+                    staff_count = (num_guests + ratio - 1) // ratio
+                    total_cost = staff_count * hourly_rate * hours
 
-                ratio = staff_config[staff_role].get('ratio', 1)
-                hourly_rate = staff_config[staff_role].get('per_hour', 0)
+                    staff_needed.append({
+                        "Role": role,
+                        "Staff Required": staff_count,
+                        "Hourly Rate (£)": hourly_rate,
+                        "Hours": hours,
+                        "Total Cost (£)": total_cost
+                    })
 
-                staff_count = (num_guests + ratio - 1) // ratio
-                total_cost = staff_count * hourly_rate * 10  # Assuming hours are fixed at 10
-
-                staff_needed = [{
-                    "Role": staff_role,
-                    "Staff Required": staff_count,
-                    "Hourly Rate (£)": hourly_rate,
-                    "Hours": 10,
-                    "Total Cost (£)": total_cost
-                }]
-
+            if staff_needed:
                 df_staff = pd.DataFrame(staff_needed)
                 st.dataframe(df_staff)
-
                 total_staff = df_staff["Staff Required"].sum()
-                total_event_cost = df_staff["Total Cost (£)"].sum()
 
                 key = f"{event_type}_{event_date}"
                 st.session_state.calculation_results[key] = {
@@ -118,14 +81,13 @@ def calculator():
                     "event_date": str(event_date),
                     "guests": num_guests,
                     "staff_needed": staff_needed,
-                    "total_cost": total_event_cost,
+                    "total_cost": df_staff["Total Cost (£)"].sum(),
                     "total_staff": total_staff
                 }
 
-                # Summary Table
                 df_costs = pd.DataFrame([{
                     "Event": event_type,
-                    "Total Cost (£)": total_event_cost,
+                    "Total Cost (£)": df_staff["Total Cost (£)"].sum(),
                     "Total Staff": total_staff,
                     "Guests": num_guests, 
                     "Date": str(event_date)
@@ -140,7 +102,6 @@ def calculator():
                     }
                 )
 
-                # Altair Chart
                 cost_chart = alt.Chart(df_staff).mark_bar().encode(
                     x=alt.X("Role:N", title="Role", axis=alt.Axis(labelAngle=-45)),
                     y=alt.Y("Total Cost (£):Q", title="Cost in £"),
@@ -154,6 +115,7 @@ def calculator():
 
                 st.altair_chart(cost_chart, use_container_width=True)
                 st.divider()
-
+            else:
+                st.info("No valid roles for the selected event type.")
         else:
             st.warning("Please select an event type and enter the number of guests.")
