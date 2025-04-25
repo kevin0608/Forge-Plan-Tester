@@ -4,7 +4,9 @@ import bcrypt
 # Example user credentials
 users = {
     "k": bcrypt.hashpw("123".encode('utf-8'), bcrypt.gensalt()),
-    "acampbell": bcrypt.hashpw("King!".encode('utf-8'), bcrypt.gensalt())
+    "acampbell": bcrypt.hashpw("King!".encode('utf-8'), bcrypt.gensalt()),
+    "Ana": bcrypt.hashpw("123".encode('utf-8'), bcrypt.gensalt()),
+    "James": bcrypt.hashpw("123".encode('utf-8'), bcrypt.gensalt())
 }
 
 # Dummy app content - import your real modules instead
